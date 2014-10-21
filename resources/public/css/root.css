@@ -1,0 +1,27 @@
+html, body {
+  height: 100%;
+}
+
+body {
+  background-color: black;
+}
+
+@font-face {
+  font-family: 'ChocolateBox';
+  src: url('/fonts/chocolate-box.ttf');
+}
+
+input.login {
+  color: #CCCCCC;
+  background-color: black;
+  border-color: #333333;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  border-left-width: 0px;
+  box-shadow: 0;
+}
+
+.banner-text {
+  font-family: "ChocolateBox", Verdana, Geneva, Arial, sans-serif;
+  cursor: hand; cursor: pointer;
+}
