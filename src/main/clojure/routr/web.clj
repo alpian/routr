@@ -108,6 +108,21 @@
         ]
        ]
       ]))
+  (GET "/signin" [] 
+    (response/redirect
+;      StringBuilder oauthUrl = new StringBuilder().append("https://accounts.google.com/o/oauth2/auth")
+;   .append("?client_id=").append(clientId) // the client id from the api console registration
+;   .append("&response_type=code")
+;   .append("&scope=openid%20email") // scope is the api permissions we are requesting
+;   .append("&redirect_uri=http://localhost:8089/callback") // the servlet that google redirects to after authorization
+;   .append("&state=this_can_be_anything_to_help_correlate_the_response%3Dlike_session_id")
+;   .append("&access_type=offline") // here we are asking to access to user's data while they are not signed in
+;   .append("&approval_prompt=force"); // this requires them to verify which account to use, if they are already signed in
+    
+      (str
+        "https://accounts.google.com/o/oauth2/auth?"
+        "client_id=" "659416221395-vlkflcmp31r5ie9s1vi2t8igffhhrvqi.apps.googleusercontent.com"
+        )))
   (route/resources "/")
   (route/not-found "<h1>Page not found</h1>"))
 
