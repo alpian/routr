@@ -9,7 +9,8 @@
             [clojure.pprint :as pprint]
             [ring.util.response :as response]
             [clojure.java.jdbc :as sql]
-            [hiccup.element :as element])
+            [hiccup.element :as element]
+            [clj-http.client :as client])
   (:import [org.lesscss LessCompiler]
            [java.io File]
            [java.sql Timestamp])
@@ -108,21 +109,43 @@
         ]
        ]
       ]))
-  (GET "/signin" [] 
+  (GET "/signin" []
+    (println "redirecting...")
     (response/redirect
-;      StringBuilder oauthUrl = new StringBuilder().append("https://accounts.google.com/o/oauth2/auth")
-;   .append("?client_id=").append(clientId) // the client id from the api console registration
-;   .append("&response_type=code")
-;   .append("&scope=openid%20email") // scope is the api permissions we are requesting
-;   .append("&redirect_uri=http://localhost:8089/callback") // the servlet that google redirects to after authorization
-;   .append("&state=this_can_be_anything_to_help_correlate_the_response%3Dlike_session_id")
-;   .append("&access_type=offline") // here we are asking to access to user's data while they are not signed in
-;   .append("&approval_prompt=force"); // this requires them to verify which account to use, if they are already signed in
-    
       (str
         "https://accounts.google.com/o/oauth2/auth?"
         "client_id=" "659416221395-vlkflcmp31r5ie9s1vi2t8igffhhrvqi.apps.googleusercontent.com"
+        "&response_type=code"
+        "&scope=openid%20email"
+        "&redirect_uri=http://localhost:9000/oauth2callback"
+        "&state=1"
+;        "&access_type=offline"
+;        "&prompt=select_account"
         )))
+  (GET "/oauth2callback" [code]
+    (println "callback:" code)
+    (let [response (client/post "https://accounts.google.com/o/oauth2/token"
+                           {:socket-timeout 1000  ;; in milliseconds
+                            :conn-timeout 1000    ;; in milliseconds
+                            :as :json
+                            :accept :json
+                            :form-params{:code code
+                                         :client_id "659416221395-vlkflcmp31r5ie9s1vi2t8igffhhrvqi.apps.googleusercontent.com"
+                                         :client_secret (System/getenv "GOOGLE_OAUTH2_CLIENT_SECRET")
+                                         :redirect_uri "http://localhost:9000/oauth2callback"
+                                         :grant_type "authorization_code"}})]
+      (println "in oauth2 callback")
+      (println (:body response))
+      (let [access_token (:access_token (:body response))
+            _ (println (str "access token: " access_token))
+            basicinfo (client/get (str "https://www.googleapis.com/oauth2/v1/userinfo?access_token=" access_token))]
+        (println "basic info")
+        (println basicinfo)
+        (html5 
+          [:body
+           [:p (str basicinfo)]])
+        )))
+  
   (route/resources "/")
   (route/not-found "<h1>Page not found</h1>"))
 
@@ -135,7 +158,6 @@
 
 (defn redirect-non-https [handler]
   (fn [request]
-    (pprint/pprint request)
     (if (redirect-https? request)
       (response/redirect (str "https://" (get (:headers request) "host") (:uri request)))
       (handler request))))
