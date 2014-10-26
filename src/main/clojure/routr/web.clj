@@ -85,14 +85,14 @@
     (html5 
       [:head 
        [:meta {:name "viewport" :content "width=device-width, initial-scale=1.0"}]
-       (include-less "/javascript/twitter-bootstrap/less" "bootstrap")
-       (include-less "/javascript/twitter-bootstrap/less" "responsive")
+       (include-css "https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css")
        (include-js 
-         "/javascript/jquery/jquery-1.9.1.js" 
-         "/javascript/jquery-ui/jquery-ui-1.10.2/ui/jquery-ui.js" 
-         "/javascript/routr/fit-banner.js")
+         "http://code.jquery.com/jquery-2.1.1.min.js" 
+         "http://code.jquery.com/ui/1.11.2/jquery-ui.min.js" 
+         "/javascript/routr/fit-banner.js"
+         "https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js")
        (include-css "/css/root.css")
-       [:title "Locadr"]]
+       [:title "Routr"]]
       [:body
        [:table {:style "width:100%; height:100%;"}
         [:tr 
@@ -119,8 +119,6 @@
         "&scope=openid%20email"
         "&redirect_uri=http://localhost:9000/oauth2callback"
         "&state=1"
-;        "&access_type=offline"
-;        "&prompt=select_account"
         )))
   (GET "/oauth2callback" [code]
     (println "callback:" code)
