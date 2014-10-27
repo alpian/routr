@@ -8,6 +8,7 @@
             [compojure.handler :as handler]
             [clojure.pprint :as pprint]
             [ring.util.response :as response]
+            [ring.middleware.reload :as reload]
             [clojure.java.jdbc :as sql]
             [hiccup.element :as element]
             [clj-http.client :as client])
@@ -84,30 +85,35 @@
   (GET "/" []
     (html5 
       [:head 
-       [:meta {:name "viewport" :content "width=device-width, initial-scale=1.0"}]
-       (include-css "https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css")
+       [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
+       (include-css 
+         "https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"
+         "https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css"
+         "/css/bootstrap-social.css"
+         )
        (include-js 
          "http://code.jquery.com/jquery-2.1.1.min.js" 
          "http://code.jquery.com/ui/1.11.2/jquery-ui.min.js" 
-         "/javascript/routr/fit-banner.js"
          "https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js")
        (include-css "/css/root.css")
        [:title "Routr"]]
       [:body
-       [:table {:style "width:100%; height:100%;"}
-        [:tr 
-         [:td {:style "vertical-align: middle; text-align: center;"} 
-          [:span {:style "position: relative;" :class "fit-banner banner-text hover-highlight"} "Sienna Davies"
-           [:span {:style "position: absolute; top: 100%; right: 0px; font-size:14px;"}
-            [:table
-             [:tr [:td [:input {:class "login" :type "text" :placeholder "Username"} ]]]
-             [:tr [:td [:input {:class "login" :type "password" :placeholder "Password"} ]]]
-            ]
-           ]
-          ]
-         ] 
+       [:div {:class "container"}
+        [:div {:class "signin-container"}
+         [:h1 "Routr"]
+         [:h2 "Share your ride"]
+         [:p 
+          "In order to use the service please sign in with Google+ "
+          "("
+          [:span 
+           {:title "This is just so we can allocate your rides to you - we do not share your information with 3rd parties"
+            :class "r-tooltip"} 
+           "why?"]
+          ")"]
+         [:a {:class "btn btn-block btn-social btn-google-plus"}
+          [:i {:class "fa fa-google-plus"}]
+          "Sign in with Google"]]
         ]
-       ]
       ]))
   (GET "/signin" []
     (println "redirecting...")
@@ -161,9 +167,11 @@
       (handler request))))
 
 (def app 
-  (-> (handler/site the-routes)
-      (redirect-non-https)
-      (wrap-base-url)))
+  (-> 
+    (handler/site the-routes)
+    (reload/wrap-reload '(routr.web))
+    (redirect-non-https)
+    (wrap-base-url)))
 
 (defn -main [& args]
   (run-jetty #'app {:port (Integer. (first args))}))
