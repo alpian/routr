@@ -9,6 +9,8 @@
             [clojure.pprint :as pprint]
             [ring.util.response :as response]
             [ring.middleware.reload :as reload]
+            [ring.middleware.session :as session]
+            [ring.middleware.session.cookie :as cookie]
             [clojure.java.jdbc :as sql]
             [hiccup.element :as element]
             [clj-http.client :as client])
@@ -55,6 +57,58 @@
 (defn- to-lat-long-json [lat-long]
   (str "{ lat: " (:lat lat-long) ", lng: " (:lng lat-long) " }"))
 
+(defn signin-page []
+  (html5 
+    [:head 
+     [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
+     (include-css 
+       "https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"
+       "https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css"
+       "/css/bootstrap-social.css"
+       )
+     (include-js 
+       "http://code.jquery.com/jquery-2.1.1.min.js" 
+       "http://code.jquery.com/ui/1.11.2/jquery-ui.min.js" 
+       "https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js")
+     (include-css "/css/root.css")
+     [:title "Routr"]]
+      [:body
+       [:div {:class "container"}
+        [:div {:class "signin-container"}
+         [:h1 "Routr"]
+         [:h3 "Share your ride"]
+         [:p 
+          "In order to use the service please sign in with Google "
+          "("
+          [:span 
+           {:title "This is just so we can allocate your rides to you - we do not share your information with 3rd parties"
+            :class "r-tooltip"} 
+           "why?"]
+          ")"]
+         [:a {:class "btn btn-block btn-social btn-google-plus"
+              :href (str "/signin")}
+          [:i {:class "fa fa-google-plus"}]
+          "Sign in with Google"]]]]))
+
+(defn main-page [session]
+  (html5 
+    [:head 
+     [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
+     (include-css 
+       "https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"
+       "https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css"
+       "/css/bootstrap-social.css"
+       )
+     (include-js 
+       "http://code.jquery.com/jquery-2.1.1.min.js" 
+       "http://code.jquery.com/ui/1.11.2/jquery-ui.min.js" 
+       "https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js")
+     (include-css "/css/root.css")
+     [:title "Routr"]]
+      [:body
+       [:p 
+        (str "You (" (:name (:identity session)) ") are signed in!")]]))
+
 (defroutes the-routes
   (GET "/whereiam" [point]
     (record point)
@@ -82,39 +136,14 @@
       (include-js "/javascript/routr/where.js")
       [:body
        [:div {:id "map-canvas"}]]))
-  (GET "/" []
-    (html5 
-      [:head 
-       [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
-       (include-css 
-         "https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"
-         "https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css"
-         "/css/bootstrap-social.css"
-         )
-       (include-js 
-         "http://code.jquery.com/jquery-2.1.1.min.js" 
-         "http://code.jquery.com/ui/1.11.2/jquery-ui.min.js" 
-         "https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js")
-       (include-css "/css/root.css")
-       [:title "Routr"]]
-      [:body
-       [:div {:class "container"}
-        [:div {:class "signin-container"}
-         [:h1 "Routr"]
-         [:h2 "Share your ride"]
-         [:p 
-          "In order to use the service please sign in with Google+ "
-          "("
-          [:span 
-           {:title "This is just so we can allocate your rides to you - we do not share your information with 3rd parties"
-            :class "r-tooltip"} 
-           "why?"]
-          ")"]
-         [:a {:class "btn btn-block btn-social btn-google-plus"}
-          [:i {:class "fa fa-google-plus"}]
-          "Sign in with Google"]]
-        ]
-      ]))
+  (GET "/" request
+    (println request)
+    (let [session (:session request)
+          session-id (:id session)]
+      (if (nil? session-id)
+        (signin-page)
+        (main-page session)))
+    )
   (GET "/signin" []
     (println "redirecting...")
     (response/redirect
@@ -142,12 +171,14 @@
       (println (:body response))
       (let [access_token (:access_token (:body response))
             _ (println (str "access token: " access_token))
-            basicinfo (client/get (str "https://www.googleapis.com/oauth2/v1/userinfo?access_token=" access_token))]
+            basicinfo (client/get 
+                        (str "https://www.googleapis.com/oauth2/v1/userinfo?access_token=" access_token)
+                        {:accept :json
+                         :as :json})]
         (println "basic info")
-        (println basicinfo)
-        (html5 
-          [:body
-           [:p (str basicinfo)]])
+        (println (:body basicinfo))
+        (assoc (response/redirect "/") :session {:id (.toString (java.util.UUID/randomUUID))
+                                                 :identity (:body basicinfo)})
         )))
   
   (route/resources "/")
@@ -169,6 +200,9 @@
 (def app 
   (-> 
     (handler/site the-routes)
+    (session/wrap-session 
+      {:store (cookie/cookie-store {:key (System/getenv "COOKIE_KEY")})
+       :cookie-attrs {:max-age (* 12 3600)}})
     (reload/wrap-reload '(routr.web))
     (redirect-non-https)
     (wrap-base-url)))
