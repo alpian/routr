@@ -102,12 +102,41 @@
      (include-js 
        "http://code.jquery.com/jquery-2.1.1.min.js" 
        "http://code.jquery.com/ui/1.11.2/jquery-ui.min.js" 
-       "https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js")
+       "https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"
+       (str "https://maps.googleapis.com/maps/api/js?key=" (System/getenv "GOOGLE_API_KEY")))
      (include-css "/css/root.css")
      [:title "Routr"]]
       [:body
-       [:p 
-        (str "You (" (:name (:identity session)) ") are signed in!")]]))
+       [:nav {:class "navbar navbar-default navbar-fixed-top" :role "navigation"}
+        [:div {:class "container"}
+         [:div {:class "navbar-header"}
+          [:button {:type "button" :class "navbar-toggle collapsed" :data-toggle "collapse" :data-target "#navbar" :aria-expanded "false" :aria-controls "navbar"}
+           [:span {:class "sr-only"} "Toggle navigation"]
+           [:span {:class "icon-bar"}]
+           [:span {:class "icon-bar"}]
+           [:span {:class "icon-bar"}]
+           [:a {:class "navbar-brand" :href "#"} "Routr"]]
+          [:div {:id "navbar" :class "navbar-collapse collapse"}
+           [:ul {:class "nav navbar-nav"}
+            [:li {:class "active"}
+             [:a {:href "#"} "Home"]]
+            [:li {:class "active"} [:a {:href "#"} "Home"]]
+            [:li [:a {:href "#about"} "About"]]
+            [:li [:a {:href "#contact"} "Contact"]]
+            [:li {:class "dropdown"}
+             [:a {:href "#" :class "dropdown-toggle" :data-toggle "dropdown"} "Dropdown" [:span {:class "caret"}]]
+             [:ul {:class "dropdown-menu" :role "menu"}
+              [:li [:a {:href "#"} "Action"]]
+              [:li {:class "divider"}]
+              [:li {:class "dropdown-header"} "Navigation header"]
+              [:li [:a {:href "#"} "Another action"]]]]]
+           [:ul {:class "nav navbar-nav navbar-right"}
+              [:li [:a {:href "../navbar"} "Default"]]
+              [:li [:a {:href "../navbar-static-top"} "Static top"]]
+              [:li {:class "active"} [:a {:href "./"} "Fixed top"]]]]]]]
+       
+       [:div {:class "container"}
+        [:p (str "You (" (:name (:identity session)) ") are signed in!")]]]))
 
 (defroutes the-routes
   (GET "/whereiam" [point]
