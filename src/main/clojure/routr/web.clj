@@ -91,52 +91,57 @@
           "Sign in with Google"]]]]))
 
 (defn main-page [session]
-  (html5 
-    [:head 
-     [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
-     (include-css 
-       "https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"
-       "https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css"
-       "/css/bootstrap-social.css"
-       )
-     (include-js 
-       "http://code.jquery.com/jquery-2.1.1.min.js" 
-       "http://code.jquery.com/ui/1.11.2/jquery-ui.min.js" 
-       "https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"
-       (str "https://maps.googleapis.com/maps/api/js?key=" (System/getenv "GOOGLE_API_KEY")))
-     (include-css "/css/root.css")
-     [:title "Routr"]]
-      [:body
-       [:nav {:class "navbar navbar-default navbar-fixed-top" :role "navigation"}
-        [:div {:class "container"}
-         [:div {:class "navbar-header"}
-          [:button {:type "button" :class "navbar-toggle collapsed" :data-toggle "collapse" :data-target "#navbar" :aria-expanded "false" :aria-controls "navbar"}
-           [:span {:class "sr-only"} "Toggle navigation"]
-           [:span {:class "icon-bar"}]
-           [:span {:class "icon-bar"}]
-           [:span {:class "icon-bar"}]
+  (let [name (:name (:identity session))]
+    (html5 
+     [:head 
+      [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
+      (include-css 
+        "https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"
+        "https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css"
+        "/css/bootstrap-social.css"
+        )
+      (include-js 
+        "http://code.jquery.com/jquery-2.1.1.min.js" 
+        "http://code.jquery.com/ui/1.11.2/jquery-ui.min.js" 
+        "https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"
+        (str "https://maps.googleapis.com/maps/api/js?key=" (System/getenv "GOOGLE_API_KEY"))
+        "/javascript/routr/main.js")
+      (include-css "/css/root.css")
+      [:title "Routr"]]
+       [:body
+        [:nav {:class "navbar navbar-default navbar-fixed-top" :role "navigation"}
+         [:div {:class "container"}
+          [:div {:class "navbar-header"}
+           [:button {:type "button" :class "navbar-toggle collapsed" :data-toggle "collapse" :data-target "#navbar" :aria-expanded "false" :aria-controls "navbar"}
+            [:span {:class "sr-only"} "Toggle navigation"]
+            [:span {:class "icon-bar"}]
+            [:span {:class "icon-bar"}]
+            [:span {:class "icon-bar"}]]
            [:a {:class "navbar-brand" :href "#"} "Routr"]]
           [:div {:id "navbar" :class "navbar-collapse collapse"}
-           [:ul {:class "nav navbar-nav"}
-            [:li {:class "active"}
-             [:a {:href "#"} "Home"]]
-            [:li {:class "active"} [:a {:href "#"} "Home"]]
-            [:li [:a {:href "#about"} "About"]]
-            [:li [:a {:href "#contact"} "Contact"]]
-            [:li {:class "dropdown"}
-             [:a {:href "#" :class "dropdown-toggle" :data-toggle "dropdown"} "Dropdown" [:span {:class "caret"}]]
-             [:ul {:class "dropdown-menu" :role "menu"}
-              [:li [:a {:href "#"} "Action"]]
-              [:li {:class "divider"}]
-              [:li {:class "dropdown-header"} "Navigation header"]
-              [:li [:a {:href "#"} "Another action"]]]]]
-           [:ul {:class "nav navbar-nav navbar-right"}
-              [:li [:a {:href "../navbar"} "Default"]]
-              [:li [:a {:href "../navbar-static-top"} "Static top"]]
-              [:li {:class "active"} [:a {:href "./"} "Fixed top"]]]]]]]
+            [:ul {:class "nav navbar-nav"}
+             [:li {:class "active"} [:a {:href "#"} "Home"]]
+             [:li [:a {:href "#about"} "About"]]
+             [:li [:a {:href "#contact"} "Contact"]]
+             [:li {:class "dropdown"}
+              [:a {:href "#" :class "dropdown-toggle" :data-toggle "dropdown"} "Dropdown" [:span {:class "caret"}]]
+              [:ul {:class "dropdown-menu" :role "menu"}
+               [:li [:a {:href "#"} "Action"]]
+               [:li {:class "divider"}]
+               [:li {:class "dropdown-header"} "Navigation header"]
+               [:li [:a {:href "#"} "Another action"]]]]]
+            [:ul {:class "nav navbar-nav navbar-right"}
+               [:li [:a {:href "../navbar"} "Default"]]
+               [:li [:a {:href "../navbar-static-top"} "Static top"]]
+               [:li {:class "active"} [:a {:href "./"} "Fixed top"]]
+               [:li {:class "dropdown"}
+                [:a {:href "#" :class "dropdown-toggle" :data-toggle "dropdown"} name [:span {:class "caret"}]]
+                [:ul {:class "dropdown-menu" :role "menu"}
+               [:li [:a {:href "/signout"} "Sign out"]]]]]]]]
        
-       [:div {:class "container"}
-        [:p (str "You (" (:name (:identity session)) ") are signed in!")]]]))
+        [:div {:class "container"}
+         [:p (str "You (" name ") are signed in!")]
+         [:div {:id "map-canvas"}]]])))
 
 (defroutes the-routes
   (GET "/whereiam" [point]
@@ -173,6 +178,8 @@
         (signin-page)
         (main-page session)))
     )
+  (GET "/signout" []
+    (assoc (response/redirect "/") :session {}))
   (GET "/signin" []
     (println "redirecting...")
     (response/redirect

@@ -12,3 +12,7 @@ body {
 	cursor: pointer;
 	text-decoration: underline;
 }
+
+#map-canvas {
+	height: 500px;
+}
